@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navigation } from "@/components/ui/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Edit, Trash2, Plus, ExternalLink } from "lucide-react";
 import { Company } from "@/types/company";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 // Mock data
 const mockCompanies: Company[] = [
@@ -18,9 +19,10 @@ const mockCompanies: Company[] = [
 ];
 
 export default function Companies() {
-  const [companies, setCompanies] = useState<Company[]>(mockCompanies);
+  const [companies, setCompanies] = useState<Company[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
+  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     nome: "",
     ticker: "",
@@ -28,34 +30,81 @@ export default function Companies() {
   });
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Load companies from Supabase
+  useEffect(() => {
+    loadCompanies();
+  }, []);
+
+  const loadCompanies = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('companies')
+        .select('*')
+        .order('nome');
+
+      if (error) throw error;
+      setCompanies(data || []);
+    } catch (error) {
+      console.error('Erro ao carregar empresas:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar empresas do banco de dados.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (editingCompany) {
-      // Update existing company
-      setCompanies(companies.map(c => 
-        c.id === editingCompany.id 
-          ? { ...editingCompany, ...formData }
-          : c
-      ));
+    try {
+      if (editingCompany) {
+        // Update existing company
+        const { error } = await supabase
+          .from('companies')
+          .update({
+            nome: formData.nome,
+            ticker: formData.ticker,
+            link_ri: formData.link_ri
+          })
+          .eq('id', editingCompany.id);
+
+        if (error) throw error;
+
+        toast({
+          title: "Empresa atualizada",
+          description: "Os dados da empresa foram atualizados com sucesso.",
+        });
+      } else {
+        // Create new company
+        const { error } = await supabase
+          .from('companies')
+          .insert({
+            nome: formData.nome,
+            ticker: formData.ticker,
+            link_ri: formData.link_ri
+          });
+
+        if (error) throw error;
+
+        toast({
+          title: "Empresa cadastrada",
+          description: "Nova empresa foi cadastrada com sucesso.",
+        });
+      }
+      
+      loadCompanies(); // Reload data
+      handleCloseDialog();
+    } catch (error) {
+      console.error('Erro ao salvar empresa:', error);
       toast({
-        title: "Empresa atualizada",
-        description: "Os dados da empresa foram atualizados com sucesso.",
-      });
-    } else {
-      // Create new company
-      const newCompany: Company = {
-        id: Date.now().toString(),
-        ...formData,
-      };
-      setCompanies([...companies, newCompany]);
-      toast({
-        title: "Empresa cadastrada",
-        description: "Nova empresa foi cadastrada com sucesso.",
+        title: "Erro",
+        description: "Erro ao salvar empresa no banco de dados.",
+        variant: "destructive"
       });
     }
-    
-    handleCloseDialog();
   };
 
   const handleEdit = (company: Company) => {
@@ -68,12 +117,29 @@ export default function Companies() {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    setCompanies(companies.filter(c => c.id !== id));
-    toast({
-      title: "Empresa excluída",
-      description: "A empresa foi removida com sucesso.",
-    });
+  const handleDelete = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('companies')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Empresa excluída",
+        description: "A empresa foi removida com sucesso.",
+      });
+      
+      loadCompanies(); // Reload data
+    } catch (error) {
+      console.error('Erro ao excluir empresa:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao excluir empresa do banco de dados.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleCloseDialog = () => {

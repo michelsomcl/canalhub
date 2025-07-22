@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navigation } from "@/components/ui/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Edit, Trash2, Plus, Copy, Database } from "lucide-react";
 import { IndicatorDefinition } from "@/types/company";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 // Default indicators
 const defaultIndicators: IndicatorDefinition[] = [
@@ -82,10 +83,11 @@ const categoryLabels = {
 };
 
 export default function Indicators() {
-  const [indicators, setIndicators] = useState<IndicatorDefinition[]>(defaultIndicators);
+  const [indicators, setIndicators] = useState<IndicatorDefinition[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingIndicator, setEditingIndicator] = useState<IndicatorDefinition | null>(null);
   const [showSql, setShowSql] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState<{
     name: string;
     field_name: string;
@@ -100,6 +102,43 @@ export default function Indicators() {
     description: "",
   });
   const { toast } = useToast();
+
+  // Load indicators from Supabase
+  useEffect(() => {
+    loadIndicators();
+  }, []);
+
+  const loadIndicators = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('indicator_definitions')
+        .select('*')
+        .order('name');
+
+      if (error) throw error;
+
+      const formattedIndicators: IndicatorDefinition[] = data.map(item => ({
+        id: item.id,
+        name: item.name,
+        field_name: item.field_name,
+        category: item.category as IndicatorDefinition['category'],
+        unit: item.unit as IndicatorDefinition['unit'],
+        description: item.description || "",
+        sql_column: item.sql_column
+      }));
+
+      setIndicators(formattedIndicators);
+    } catch (error) {
+      console.error('Erro ao carregar indicadores:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar indicadores do banco de dados.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const generateFieldName = (name: string) => {
     return name
@@ -116,42 +155,62 @@ export default function Indicators() {
     return `${fieldName} ${dataType}`;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     const fieldName = formData.field_name || generateFieldName(formData.name);
     const sqlColumn = generateSqlColumn(fieldName, formData.unit);
     
-    if (editingIndicator) {
-      setIndicators(indicators.map(i => 
-        i.id === editingIndicator.id 
-          ? { 
-              ...editingIndicator, 
-              ...formData,
-              field_name: fieldName,
-              sql_column: sqlColumn
-            }
-          : i
-      ));
+    try {
+      if (editingIndicator) {
+        const { error } = await supabase
+          .from('indicator_definitions')
+          .update({
+            name: formData.name,
+            field_name: fieldName,
+            category: formData.category,
+            unit: formData.unit,
+            description: formData.description,
+            sql_column: sqlColumn
+          })
+          .eq('id', editingIndicator.id);
+
+        if (error) throw error;
+
+        toast({
+          title: "Indicador atualizado",
+          description: "O indicador foi atualizado com sucesso.",
+        });
+      } else {
+        const { error } = await supabase
+          .from('indicator_definitions')
+          .insert({
+            name: formData.name,
+            field_name: fieldName,
+            category: formData.category,
+            unit: formData.unit,
+            description: formData.description,
+            sql_column: sqlColumn
+          });
+
+        if (error) throw error;
+
+        toast({
+          title: "Indicador criado",
+          description: "Novo indicador foi criado com sucesso.",
+        });
+      }
+      
+      loadIndicators(); // Reload data
+      handleCloseDialog();
+    } catch (error) {
+      console.error('Erro ao salvar indicador:', error);
       toast({
-        title: "Indicador atualizado",
-        description: "O indicador foi atualizado com sucesso.",
-      });
-    } else {
-      const newIndicator: IndicatorDefinition = {
-        id: Date.now().toString(),
-        ...formData,
-        field_name: fieldName,
-        sql_column: sqlColumn,
-      };
-      setIndicators([...indicators, newIndicator]);
-      toast({
-        title: "Indicador criado",
-        description: "Novo indicador foi criado com sucesso.",
+        title: "Erro",
+        description: "Erro ao salvar indicador no banco de dados.",
+        variant: "destructive"
       });
     }
-    
-    handleCloseDialog();
   };
 
   const handleEdit = (indicator: IndicatorDefinition) => {
@@ -166,12 +225,29 @@ export default function Indicators() {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    setIndicators(indicators.filter(i => i.id !== id));
-    toast({
-      title: "Indicador excluído",
-      description: "O indicador foi removido com sucesso.",
-    });
+  const handleDelete = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('indicator_definitions')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Indicador excluído",
+        description: "O indicador foi removido com sucesso.",
+      });
+      
+      loadIndicators(); // Reload data
+    } catch (error) {
+      console.error('Erro ao excluir indicador:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao excluir indicador do banco de dados.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleCloseDialog = () => {

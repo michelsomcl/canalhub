@@ -7,6 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Edit } from "lucide-react";
 import { Company, FinancialIndicator } from "@/types/company";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 // Mock data - would come from Supabase
 const mockCompanies: Company[] = [
@@ -70,16 +72,72 @@ const mockData: FinancialIndicator[] = [
 ];
 
 export default function Dashboard() {
-  const [selectedCompany, setSelectedCompany] = useState<string>("1");
+  const [selectedCompany, setSelectedCompany] = useState<string>("");
+  const [companies, setCompanies] = useState<Company[]>([]);
   const [companyData, setCompanyData] = useState<FinancialIndicator[]>([]);
   const [latestData, setLatestData] = useState<FinancialIndicator | null>(null);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
+  // Load companies from Supabase
   useEffect(() => {
-    // Filter data for selected company
-    const data = mockData.filter(d => d.company_id === selectedCompany);
-    setCompanyData(data);
-    setLatestData(data[0] || null);
+    loadCompanies();
+  }, []);
+
+  // Load financial data when company changes
+  useEffect(() => {
+    if (selectedCompany) {
+      loadFinancialData(selectedCompany);
+    }
   }, [selectedCompany]);
+
+  const loadCompanies = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('companies')
+        .select('*')
+        .order('nome');
+
+      if (error) throw error;
+      
+      setCompanies(data || []);
+      if (data && data.length > 0) {
+        setSelectedCompany(data[0].id);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar empresas:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar empresas do banco de dados.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadFinancialData = async (companyId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('financial_indicators')
+        .select('*')
+        .eq('company_id', companyId)
+        .order('year', { ascending: false })
+        .order('quarter_number', { ascending: false });
+
+      if (error) throw error;
+      
+      setCompanyData(data || []);
+      setLatestData(data && data.length > 0 ? data[0] : null);
+    } catch (error) {
+      console.error('Erro ao carregar dados financeiros:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar dados financeiros da empresa.",
+        variant: "destructive"
+      });
+    }
+  };
 
   const getChartData = (field: keyof FinancialIndicator) => {
     return companyData
@@ -91,7 +149,7 @@ export default function Dashboard() {
       .reverse();
   };
 
-  const selectedCompanyInfo = mockCompanies.find(c => c.id === selectedCompany);
+  const selectedCompanyInfo = companies.find(c => c.id === selectedCompany);
 
   return (
     <div className="min-h-screen bg-background">
@@ -107,7 +165,7 @@ export default function Dashboard() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {mockCompanies.map(company => (
+                {companies.map(company => (
                   <SelectItem key={company.id} value={company.id}>
                     {company.ticker} - {company.nome}
                   </SelectItem>

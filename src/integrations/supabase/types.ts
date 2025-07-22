@@ -14,7 +14,179 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      companies: {
+        Row: {
+          created_at: string
+          id: string
+          link_ri: string | null
+          nome: string
+          ticker: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          link_ri?: string | null
+          nome: string
+          ticker: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          link_ri?: string | null
+          nome?: string
+          ticker?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      financial_indicators: {
+        Row: {
+          caixa_equivalentes_caixa: number | null
+          capital_giro: number | null
+          company_id: string
+          created_at: string
+          custo_receita_operacional: number | null
+          despesas_operacionais_total: number | null
+          dividend_yield: number | null
+          ebit: number | null
+          ebitda: number | null
+          endividamento_total: number | null
+          fluxo_caixa_liquido_atividades_operacionais: number | null
+          id: string
+          liquidez_corrente: number | null
+          liquidez_geral: number | null
+          lucro_liquido_apos_impostos: number | null
+          lucro_operacional_antes_receita_despesa_nao_recorrente: number | null
+          lucro_por_acao: number | null
+          margem_ebitda_percent: number | null
+          margem_liquida_percent: number | null
+          margem_lucro_bruto_percent: number | null
+          margem_operacional_percent: number | null
+          percentual_divida_total_ativo_total: number | null
+          quarter: string
+          quarter_number: number
+          receitas_bens_servicos: number | null
+          roa: number | null
+          roe: number | null
+          roic: number | null
+          updated_at: string
+          variacao_liquida_caixa_total: number | null
+          year: number
+        }
+        Insert: {
+          caixa_equivalentes_caixa?: number | null
+          capital_giro?: number | null
+          company_id: string
+          created_at?: string
+          custo_receita_operacional?: number | null
+          despesas_operacionais_total?: number | null
+          dividend_yield?: number | null
+          ebit?: number | null
+          ebitda?: number | null
+          endividamento_total?: number | null
+          fluxo_caixa_liquido_atividades_operacionais?: number | null
+          id?: string
+          liquidez_corrente?: number | null
+          liquidez_geral?: number | null
+          lucro_liquido_apos_impostos?: number | null
+          lucro_operacional_antes_receita_despesa_nao_recorrente?: number | null
+          lucro_por_acao?: number | null
+          margem_ebitda_percent?: number | null
+          margem_liquida_percent?: number | null
+          margem_lucro_bruto_percent?: number | null
+          margem_operacional_percent?: number | null
+          percentual_divida_total_ativo_total?: number | null
+          quarter: string
+          quarter_number: number
+          receitas_bens_servicos?: number | null
+          roa?: number | null
+          roe?: number | null
+          roic?: number | null
+          updated_at?: string
+          variacao_liquida_caixa_total?: number | null
+          year: number
+        }
+        Update: {
+          caixa_equivalentes_caixa?: number | null
+          capital_giro?: number | null
+          company_id?: string
+          created_at?: string
+          custo_receita_operacional?: number | null
+          despesas_operacionais_total?: number | null
+          dividend_yield?: number | null
+          ebit?: number | null
+          ebitda?: number | null
+          endividamento_total?: number | null
+          fluxo_caixa_liquido_atividades_operacionais?: number | null
+          id?: string
+          liquidez_corrente?: number | null
+          liquidez_geral?: number | null
+          lucro_liquido_apos_impostos?: number | null
+          lucro_operacional_antes_receita_despesa_nao_recorrente?: number | null
+          lucro_por_acao?: number | null
+          margem_ebitda_percent?: number | null
+          margem_liquida_percent?: number | null
+          margem_lucro_bruto_percent?: number | null
+          margem_operacional_percent?: number | null
+          percentual_divida_total_ativo_total?: number | null
+          quarter?: string
+          quarter_number?: number
+          receitas_bens_servicos?: number | null
+          roa?: number | null
+          roe?: number | null
+          roic?: number | null
+          updated_at?: string
+          variacao_liquida_caixa_total?: number | null
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_indicators_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      indicator_definitions: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          field_name: string
+          id: string
+          name: string
+          sql_column: string
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          field_name: string
+          id?: string
+          name: string
+          sql_column: string
+          unit: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          field_name?: string
+          id?: string
+          name?: string
+          sql_column?: string
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
