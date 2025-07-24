@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { Navigation } from "@/components/ui/navigation";
 import { IndicatorCard } from "@/components/dashboard/IndicatorCard";
 import { IndicatorChart } from "@/components/charts/IndicatorChart";
+import { ComparisonCard } from "@/components/dashboard/ComparisonCard";
+import { FinancialDataDialog } from "@/components/dashboard/FinancialDataDialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -149,6 +151,68 @@ export default function Dashboard() {
       .reverse();
   };
 
+  const getComparison = (current: number | undefined, field: keyof FinancialIndicator) => {
+    if (!current || !companyData.length) return null;
+    
+    const sortedData = [...companyData].sort((a, b) => {
+      if (a.year !== b.year) return b.year - a.year;
+      return b.quarter_number - a.quarter_number;
+    });
+    
+    const currentIndex = sortedData.findIndex(d => d[field] === current);
+    if (currentIndex === -1) return null;
+    
+    const currentData = sortedData[currentIndex];
+    const previousQuarter = sortedData[currentIndex + 1];
+    const sameQuarterLastYear = sortedData.find(d => 
+      d.year === currentData.year - 1 && 
+      d.quarter_number === currentData.quarter_number
+    );
+    
+    return {
+      previousQuarter: previousQuarter?.[field] as number,
+      sameQuarterLastYear: sameQuarterLastYear?.[field] as number,
+    };
+  };
+
+  const getIndicatorUnit = (field: keyof FinancialIndicator): 'currency' | 'percentage' | 'ratio' => {
+    const percentageFields = ['margem_ebitda_percent', 'margem_lucro_bruto_percent', 'margem_operacional_percent', 'margem_liquida_percent', 'roe', 'roa', 'roic', 'dividend_yield'];
+    const ratioFields = ['liquidez_corrente', 'liquidez_geral'];
+    
+    if (percentageFields.includes(field as string)) return 'percentage';
+    if (ratioFields.includes(field as string)) return 'ratio';
+    return 'currency';
+  };
+
+  const getIndicatorTitle = (field: keyof FinancialIndicator): string => {
+    const titles: Record<string, string> = {
+      receitas_bens_servicos: 'Receitas de Bens e Serviços',
+      custo_receita_operacional: 'Custo da Receita Operacional',
+      despesas_operacionais_total: 'Despesas Operacionais - Total',
+      lucro_operacional_antes_receita_despesa_nao_recorrente: 'Lucro Operacional antes da Receita/Despesa Não Recorrente',
+      lucro_liquido_apos_impostos: 'Lucro Líquido após Impostos',
+      caixa_equivalentes_caixa: 'Caixa e Equivalentes de Caixa',
+      fluxo_caixa_liquido_atividades_operacionais: 'Fluxo de caixa líquido das atividades operacionais',
+      variacao_liquida_caixa_total: 'Variação líquida de Caixa Total',
+      capital_giro: 'Capital de Giro',
+      endividamento_total: 'Endividamento total',
+      percentual_divida_total_ativo_total: 'Percentual da dívida total do ativo total',
+      liquidez_geral: 'Liquidez Geral',
+      liquidez_corrente: 'Liquidez Corrente',
+      ebit: 'EBIT',
+      ebitda: 'EBITDA',
+      margem_ebitda_percent: 'Margem EBITDA %',
+      margem_lucro_bruto_percent: 'Margem de lucro bruto %',
+      margem_operacional_percent: 'Margem operacional %',
+      margem_liquida_percent: 'Margem líquida %',
+      roic: 'ROIC',
+      roe: 'ROE',
+      roa: 'ROA',
+      dividend_yield: 'Dividend Yield',
+    };
+    return titles[field as string] || field as string;
+  };
+
   const selectedCompanyInfo = companies.find(c => c.id === selectedCompany);
 
   return (
@@ -200,88 +264,215 @@ export default function Dashboard() {
           )}
         </div>
 
+        {/* Data Management Actions */}
+        <div className="mb-8 flex gap-4">
+          <FinancialDataDialog
+            companyId={selectedCompany}
+            onSuccess={() => loadFinancialData(selectedCompany)}
+            mode="create"
+          />
+          {latestData && (
+            <>
+              <FinancialDataDialog
+                companyId={selectedCompany}
+                data={latestData}
+                onSuccess={() => loadFinancialData(selectedCompany)}
+                mode="edit"
+              />
+              <FinancialDataDialog
+                companyId={selectedCompany}
+                data={latestData}
+                onSuccess={() => loadFinancialData(selectedCompany)}
+                mode="delete"
+              />
+            </>
+          )}
+        </div>
+
         {latestData && (
           <>
-            {/* Main Indicators Dashboard */}
-            <div className="mb-8">
-              <h3 className="text-xl font-semibold text-primary mb-4">
-                Principais Indicadores - {latestData.quarter}
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <IndicatorCard
-                  title="Receitas de Bens e Serviços"
-                  value={latestData.receitas_bens_servicos || 0}
-                  unit="currency"
-                  trend="up"
-                />
-                <IndicatorCard
-                  title="Lucro Líquido"
-                  value={latestData.lucro_liquido_apos_impostos || 0}
-                  unit="currency"
-                  trend="up"
-                />
-                <IndicatorCard
-                  title="EBITDA"
-                  value={latestData.ebitda || 0}
-                  unit="currency"
-                  trend="up"
-                />
-                <IndicatorCard
-                  title="Margem EBITDA"
-                  value={latestData.margem_ebitda_percent || 0}
-                  unit="percentage"
-                  trend="up"
-                />
-                <IndicatorCard
-                  title="ROE"
-                  value={latestData.roe || 0}
-                  unit="percentage"
-                  trend="up"
-                />
-                <IndicatorCard
-                  title="Liquidez Corrente"
-                  value={latestData.liquidez_corrente || 0}
-                  unit="ratio"
-                  trend="up"
-                />
-              </div>
-            </div>
-
-            {/* Historical Charts */}
-            <div className="space-y-6">
-              <h3 className="text-xl font-semibold text-primary">Evolução por Trimestre</h3>
+            {/* All Financial Indicators with Charts and Comparison Cards */}
+            <div className="space-y-8">
+              <h3 className="text-xl font-semibold text-primary">Todos os Indicadores Financeiros - {latestData.quarter}</h3>
               
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                <IndicatorChart
-                  title="Receitas de Bens e Serviços"
-                  data={getChartData('receitas_bens_servicos')}
-                  unit="currency"
-                />
-                <IndicatorChart
-                  title="Lucro Líquido após Impostos"
-                  data={getChartData('lucro_liquido_apos_impostos')}
-                  unit="currency"
-                />
-                <IndicatorChart
-                  title="EBITDA"
-                  data={getChartData('ebitda')}
-                  unit="currency"
-                />
-                <IndicatorChart
-                  title="Margem EBITDA %"
-                  data={getChartData('margem_ebitda_percent')}
-                  unit="percentage"
-                />
-                <IndicatorChart
-                  title="ROE"
-                  data={getChartData('roe')}
-                  unit="percentage"
-                />
-                <IndicatorChart
-                  title="Liquidez Corrente"
-                  data={getChartData('liquidez_corrente')}
-                  unit="ratio"
-                />
+              {/* Revenue and Operational */}
+              <div className="space-y-6">
+                <h4 className="text-lg font-medium text-primary">Receitas e Operacionais</h4>
+                <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                  {['receitas_bens_servicos', 'custo_receita_operacional', 'despesas_operacionais_total', 'lucro_operacional_antes_receita_despesa_nao_recorrente', 'lucro_liquido_apos_impostos'].map((field) => {
+                    const fieldKey = field as keyof FinancialIndicator;
+                    const value = latestData[fieldKey] as number;
+                    if (value === undefined) return null;
+                    
+                    const comparison = getComparison(value, fieldKey);
+                    return (
+                      <div key={field} className="space-y-4">
+                        <IndicatorChart
+                          title={getIndicatorTitle(fieldKey)}
+                          data={getChartData(fieldKey)}
+                          unit={getIndicatorUnit(fieldKey)}
+                        />
+                        <ComparisonCard
+                          title={getIndicatorTitle(fieldKey)}
+                          current={value}
+                          previousQuarter={comparison?.previousQuarter}
+                          sameQuarterLastYear={comparison?.sameQuarterLastYear}
+                          unit={getIndicatorUnit(fieldKey)}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Cash Flow */}
+              <div className="space-y-6">
+                <h4 className="text-lg font-medium text-primary">Fluxo de Caixa</h4>
+                <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                  {['caixa_equivalentes_caixa', 'fluxo_caixa_liquido_atividades_operacionais', 'variacao_liquida_caixa_total'].map((field) => {
+                    const fieldKey = field as keyof FinancialIndicator;
+                    const value = latestData[fieldKey] as number;
+                    if (value === undefined) return null;
+                    
+                    const comparison = getComparison(value, fieldKey);
+                    return (
+                      <div key={field} className="space-y-4">
+                        <IndicatorChart
+                          title={getIndicatorTitle(fieldKey)}
+                          data={getChartData(fieldKey)}
+                          unit={getIndicatorUnit(fieldKey)}
+                        />
+                        <ComparisonCard
+                          title={getIndicatorTitle(fieldKey)}
+                          current={value}
+                          previousQuarter={comparison?.previousQuarter}
+                          sameQuarterLastYear={comparison?.sameQuarterLastYear}
+                          unit={getIndicatorUnit(fieldKey)}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Working Capital and Debt */}
+              <div className="space-y-6">
+                <h4 className="text-lg font-medium text-primary">Capital de Giro e Endividamento</h4>
+                <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                  {['capital_giro', 'endividamento_total', 'percentual_divida_total_ativo_total'].map((field) => {
+                    const fieldKey = field as keyof FinancialIndicator;
+                    const value = latestData[fieldKey] as number;
+                    if (value === undefined) return null;
+                    
+                    const comparison = getComparison(value, fieldKey);
+                    return (
+                      <div key={field} className="space-y-4">
+                        <IndicatorChart
+                          title={getIndicatorTitle(fieldKey)}
+                          data={getChartData(fieldKey)}
+                          unit={getIndicatorUnit(fieldKey)}
+                        />
+                        <ComparisonCard
+                          title={getIndicatorTitle(fieldKey)}
+                          current={value}
+                          previousQuarter={comparison?.previousQuarter}
+                          sameQuarterLastYear={comparison?.sameQuarterLastYear}
+                          unit={getIndicatorUnit(fieldKey)}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Liquidity */}
+              <div className="space-y-6">
+                <h4 className="text-lg font-medium text-primary">Liquidez</h4>
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                  {['liquidez_geral', 'liquidez_corrente'].map((field) => {
+                    const fieldKey = field as keyof FinancialIndicator;
+                    const value = latestData[fieldKey] as number;
+                    if (value === undefined) return null;
+                    
+                    const comparison = getComparison(value, fieldKey);
+                    return (
+                      <div key={field} className="space-y-4">
+                        <IndicatorChart
+                          title={getIndicatorTitle(fieldKey)}
+                          data={getChartData(fieldKey)}
+                          unit={getIndicatorUnit(fieldKey)}
+                        />
+                        <ComparisonCard
+                          title={getIndicatorTitle(fieldKey)}
+                          current={value}
+                          previousQuarter={comparison?.previousQuarter}
+                          sameQuarterLastYear={comparison?.sameQuarterLastYear}
+                          unit={getIndicatorUnit(fieldKey)}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Profitability */}
+              <div className="space-y-6">
+                <h4 className="text-lg font-medium text-primary">Rentabilidade</h4>
+                <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                  {['ebit', 'ebitda', 'margem_ebitda_percent', 'margem_lucro_bruto_percent', 'margem_operacional_percent', 'margem_liquida_percent'].map((field) => {
+                    const fieldKey = field as keyof FinancialIndicator;
+                    const value = latestData[fieldKey] as number;
+                    if (value === undefined) return null;
+                    
+                    const comparison = getComparison(value, fieldKey);
+                    return (
+                      <div key={field} className="space-y-4">
+                        <IndicatorChart
+                          title={getIndicatorTitle(fieldKey)}
+                          data={getChartData(fieldKey)}
+                          unit={getIndicatorUnit(fieldKey)}
+                        />
+                        <ComparisonCard
+                          title={getIndicatorTitle(fieldKey)}
+                          current={value}
+                          previousQuarter={comparison?.previousQuarter}
+                          sameQuarterLastYear={comparison?.sameQuarterLastYear}
+                          unit={getIndicatorUnit(fieldKey)}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Returns */}
+              <div className="space-y-6">
+                <h4 className="text-lg font-medium text-primary">Retornos</h4>
+                <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                  {['roic', 'roe', 'roa', 'dividend_yield'].map((field) => {
+                    const fieldKey = field as keyof FinancialIndicator;
+                    const value = latestData[fieldKey] as number;
+                    if (value === undefined) return null;
+                    
+                    const comparison = getComparison(value, fieldKey);
+                    return (
+                      <div key={field} className="space-y-4">
+                        <IndicatorChart
+                          title={getIndicatorTitle(fieldKey)}
+                          data={getChartData(fieldKey)}
+                          unit={getIndicatorUnit(fieldKey)}
+                        />
+                        <ComparisonCard
+                          title={getIndicatorTitle(fieldKey)}
+                          current={value}
+                          previousQuarter={comparison?.previousQuarter}
+                          sameQuarterLastYear={comparison?.sameQuarterLastYear}
+                          unit={getIndicatorUnit(fieldKey)}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </>

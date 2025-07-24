@@ -17,7 +17,7 @@ export interface FinancialIndicator {
   // Revenue and Operational
   receitas_bens_servicos?: number;
   custo_receita_operacional?: number;
-  despesas_operacionais?: number;
+  despesas_operacionais_total?: number;
   lucro_operacional_antes_receita_despesa_nao_recorrente?: number;
   lucro_liquido_apos_impostos?: number;
   lucro_por_acao?: number;
