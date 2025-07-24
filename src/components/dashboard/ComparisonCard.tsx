@@ -25,12 +25,8 @@ export function ComparisonCard({
     
     switch (unit) {
       case 'currency':
-        return new Intl.NumberFormat('pt-BR', {
-          style: 'currency',
-          currency: 'BRL',
-          minimumFractionDigits: 0,
-          maximumFractionDigits: 0,
-        }).format(val);
+        const valueInMillions = val / 1000000;
+        return `${valueInMillions.toFixed(1)} milhões`;
       case 'percentage':
         return `${val.toFixed(2)}%`;
       case 'ratio':
