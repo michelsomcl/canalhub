@@ -18,6 +18,11 @@ export function ComparisonCard({
   unit 
 }: ComparisonCardProps) {
   const formatValue = (val: number) => {
+    // Handle null/undefined values
+    if (val === null || val === undefined || isNaN(val)) {
+      return 'N/A';
+    }
+    
     switch (unit) {
       case 'currency':
         return new Intl.NumberFormat('pt-BR', {

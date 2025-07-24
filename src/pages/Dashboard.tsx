@@ -302,7 +302,7 @@ export default function Dashboard() {
                   {['receitas_bens_servicos', 'custo_receita_operacional', 'despesas_operacionais_total', 'lucro_operacional_antes_receita_despesa_nao_recorrente', 'lucro_liquido_apos_impostos'].map((field) => {
                     const fieldKey = field as keyof FinancialIndicator;
                     const value = latestData[fieldKey] as number;
-                    if (value === undefined) return null;
+                    if (value === undefined || value === null) return null;
                     
                     const comparison = getComparison(value, fieldKey);
                     return (
@@ -314,7 +314,7 @@ export default function Dashboard() {
                         />
                         <ComparisonCard
                           title={getIndicatorTitle(fieldKey)}
-                          current={value}
+                          current={value || 0}
                           previousQuarter={comparison?.previousQuarter}
                           sameQuarterLastYear={comparison?.sameQuarterLastYear}
                           unit={getIndicatorUnit(fieldKey)}
@@ -332,7 +332,7 @@ export default function Dashboard() {
                   {['caixa_equivalentes_caixa', 'fluxo_caixa_liquido_atividades_operacionais', 'variacao_liquida_caixa_total'].map((field) => {
                     const fieldKey = field as keyof FinancialIndicator;
                     const value = latestData[fieldKey] as number;
-                    if (value === undefined) return null;
+                    if (value === undefined || value === null) return null;
                     
                     const comparison = getComparison(value, fieldKey);
                     return (
@@ -344,7 +344,7 @@ export default function Dashboard() {
                         />
                         <ComparisonCard
                           title={getIndicatorTitle(fieldKey)}
-                          current={value}
+                          current={value || 0}
                           previousQuarter={comparison?.previousQuarter}
                           sameQuarterLastYear={comparison?.sameQuarterLastYear}
                           unit={getIndicatorUnit(fieldKey)}
@@ -362,7 +362,7 @@ export default function Dashboard() {
                   {['capital_giro', 'endividamento_total', 'percentual_divida_total_ativo_total'].map((field) => {
                     const fieldKey = field as keyof FinancialIndicator;
                     const value = latestData[fieldKey] as number;
-                    if (value === undefined) return null;
+                    if (value === undefined || value === null) return null;
                     
                     const comparison = getComparison(value, fieldKey);
                     return (
@@ -374,7 +374,7 @@ export default function Dashboard() {
                         />
                         <ComparisonCard
                           title={getIndicatorTitle(fieldKey)}
-                          current={value}
+                          current={value || 0}
                           previousQuarter={comparison?.previousQuarter}
                           sameQuarterLastYear={comparison?.sameQuarterLastYear}
                           unit={getIndicatorUnit(fieldKey)}
@@ -392,7 +392,7 @@ export default function Dashboard() {
                   {['liquidez_geral', 'liquidez_corrente'].map((field) => {
                     const fieldKey = field as keyof FinancialIndicator;
                     const value = latestData[fieldKey] as number;
-                    if (value === undefined) return null;
+                    if (value === undefined || value === null) return null;
                     
                     const comparison = getComparison(value, fieldKey);
                     return (
@@ -404,7 +404,7 @@ export default function Dashboard() {
                         />
                         <ComparisonCard
                           title={getIndicatorTitle(fieldKey)}
-                          current={value}
+                          current={value || 0}
                           previousQuarter={comparison?.previousQuarter}
                           sameQuarterLastYear={comparison?.sameQuarterLastYear}
                           unit={getIndicatorUnit(fieldKey)}
@@ -422,7 +422,7 @@ export default function Dashboard() {
                   {['ebit', 'ebitda', 'margem_ebitda_percent', 'margem_lucro_bruto_percent', 'margem_operacional_percent', 'margem_liquida_percent'].map((field) => {
                     const fieldKey = field as keyof FinancialIndicator;
                     const value = latestData[fieldKey] as number;
-                    if (value === undefined) return null;
+                    if (value === undefined || value === null) return null;
                     
                     const comparison = getComparison(value, fieldKey);
                     return (
@@ -434,7 +434,7 @@ export default function Dashboard() {
                         />
                         <ComparisonCard
                           title={getIndicatorTitle(fieldKey)}
-                          current={value}
+                          current={value || 0}
                           previousQuarter={comparison?.previousQuarter}
                           sameQuarterLastYear={comparison?.sameQuarterLastYear}
                           unit={getIndicatorUnit(fieldKey)}
@@ -452,7 +452,7 @@ export default function Dashboard() {
                   {['roic', 'roe', 'roa', 'dividend_yield'].map((field) => {
                     const fieldKey = field as keyof FinancialIndicator;
                     const value = latestData[fieldKey] as number;
-                    if (value === undefined) return null;
+                    if (value === undefined || value === null) return null;
                     
                     const comparison = getComparison(value, fieldKey);
                     return (
@@ -464,7 +464,7 @@ export default function Dashboard() {
                         />
                         <ComparisonCard
                           title={getIndicatorTitle(fieldKey)}
-                          current={value}
+                          current={value || 0}
                           previousQuarter={comparison?.previousQuarter}
                           sameQuarterLastYear={comparison?.sameQuarterLastYear}
                           unit={getIndicatorUnit(fieldKey)}
