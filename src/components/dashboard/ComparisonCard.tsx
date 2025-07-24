@@ -83,9 +83,9 @@ export function ComparisonCard({
         </div>
         
         {quarterComparison && (
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">vs. Trimestre Anterior</span>
-            <div className={cn("flex items-center gap-1", getTrendColor(quarterComparison.trend))}>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground font-medium">vs. Trimestre Anterior</span>
+            <div className={cn("flex items-center gap-1 font-bold text-base", getTrendColor(quarterComparison.trend))}>
               {getTrendIcon(quarterComparison.trend)}
               <span>{quarterComparison.percentage}%</span>
             </div>
@@ -93,9 +93,9 @@ export function ComparisonCard({
         )}
         
         {yearComparison && (
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">vs. Mesmo Trimestre Ano Anterior</span>
-            <div className={cn("flex items-center gap-1", getTrendColor(yearComparison.trend))}>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground font-medium">vs. Mesmo Trimestre Ano Anterior</span>
+            <div className={cn("flex items-center gap-1 font-bold text-base", getTrendColor(yearComparison.trend))}>
               {getTrendIcon(yearComparison.trend)}
               <span>{yearComparison.percentage}%</span>
             </div>

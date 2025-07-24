@@ -18,11 +18,6 @@ const navigationItems = [
     label: "Indicadores",
     icon: Settings,
   },
-  {
-    href: "/companies/new",
-    label: "Nova Empresa",
-    icon: Plus,
-  },
 ];
 
 export function Navigation() {

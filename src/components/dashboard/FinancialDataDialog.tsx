@@ -205,12 +205,123 @@ export function FinancialDataDialog({ companyId, data, onSuccess, mode }: Financ
                 />
               </div>
               <div>
+                <Label htmlFor="custo_receita_operacional">Custo Receita Operacional</Label>
+                <Input
+                  id="custo_receita_operacional"
+                  type="number"
+                  value={formData.custo_receita_operacional || ''}
+                  onChange={(e) => setFormData({...formData, custo_receita_operacional: Number(e.target.value)})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="despesas_operacionais_total">Despesas Operacionais Total</Label>
+                <Input
+                  id="despesas_operacionais_total"
+                  type="number"
+                  value={formData.despesas_operacionais_total || ''}
+                  onChange={(e) => setFormData({...formData, despesas_operacionais_total: Number(e.target.value)})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="lucro_operacional_antes_receita_despesa_nao_recorrente">Lucro Operacional</Label>
+                <Input
+                  id="lucro_operacional_antes_receita_despesa_nao_recorrente"
+                  type="number"
+                  value={formData.lucro_operacional_antes_receita_despesa_nao_recorrente || ''}
+                  onChange={(e) => setFormData({...formData, lucro_operacional_antes_receita_despesa_nao_recorrente: Number(e.target.value)})}
+                />
+              </div>
+              <div>
                 <Label htmlFor="lucro_liquido_apos_impostos">Lucro Líquido após Impostos</Label>
                 <Input
                   id="lucro_liquido_apos_impostos"
                   type="number"
                   value={formData.lucro_liquido_apos_impostos || ''}
                   onChange={(e) => setFormData({...formData, lucro_liquido_apos_impostos: Number(e.target.value)})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="caixa_equivalentes_caixa">Caixa e Equivalentes</Label>
+                <Input
+                  id="caixa_equivalentes_caixa"
+                  type="number"
+                  value={formData.caixa_equivalentes_caixa || ''}
+                  onChange={(e) => setFormData({...formData, caixa_equivalentes_caixa: Number(e.target.value)})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="fluxo_caixa_liquido_atividades_operacionais">Fluxo de Caixa Operacional</Label>
+                <Input
+                  id="fluxo_caixa_liquido_atividades_operacionais"
+                  type="number"
+                  value={formData.fluxo_caixa_liquido_atividades_operacionais || ''}
+                  onChange={(e) => setFormData({...formData, fluxo_caixa_liquido_atividades_operacionais: Number(e.target.value)})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="variacao_liquida_caixa_total">Variação Líquida Caixa</Label>
+                <Input
+                  id="variacao_liquida_caixa_total"
+                  type="number"
+                  value={formData.variacao_liquida_caixa_total || ''}
+                  onChange={(e) => setFormData({...formData, variacao_liquida_caixa_total: Number(e.target.value)})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="capital_giro">Capital de Giro</Label>
+                <Input
+                  id="capital_giro"
+                  type="number"
+                  value={formData.capital_giro || ''}
+                  onChange={(e) => setFormData({...formData, capital_giro: Number(e.target.value)})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="endividamento_total">Endividamento Total</Label>
+                <Input
+                  id="endividamento_total"
+                  type="number"
+                  value={formData.endividamento_total || ''}
+                  onChange={(e) => setFormData({...formData, endividamento_total: Number(e.target.value)})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="percentual_divida_total_ativo_total">% Dívida Total / Ativo Total</Label>
+                <Input
+                  id="percentual_divida_total_ativo_total"
+                  type="number"
+                  step="0.01"
+                  value={formData.percentual_divida_total_ativo_total || ''}
+                  onChange={(e) => setFormData({...formData, percentual_divida_total_ativo_total: Number(e.target.value)})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="liquidez_geral">Liquidez Geral</Label>
+                <Input
+                  id="liquidez_geral"
+                  type="number"
+                  step="0.01"
+                  value={formData.liquidez_geral || ''}
+                  onChange={(e) => setFormData({...formData, liquidez_geral: Number(e.target.value)})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="liquidez_corrente">Liquidez Corrente</Label>
+                <Input
+                  id="liquidez_corrente"
+                  type="number"
+                  step="0.01"
+                  value={formData.liquidez_corrente || ''}
+                  onChange={(e) => setFormData({...formData, liquidez_corrente: Number(e.target.value)})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="ebit">EBIT</Label>
+                <Input
+                  id="ebit"
+                  type="number"
+                  value={formData.ebit || ''}
+                  onChange={(e) => setFormData({...formData, ebit: Number(e.target.value)})}
                 />
               </div>
               <div>
@@ -233,6 +344,46 @@ export function FinancialDataDialog({ companyId, data, onSuccess, mode }: Financ
                 />
               </div>
               <div>
+                <Label htmlFor="margem_lucro_bruto_percent">Margem Lucro Bruto %</Label>
+                <Input
+                  id="margem_lucro_bruto_percent"
+                  type="number"
+                  step="0.01"
+                  value={formData.margem_lucro_bruto_percent || ''}
+                  onChange={(e) => setFormData({...formData, margem_lucro_bruto_percent: Number(e.target.value)})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="margem_operacional_percent">Margem Operacional %</Label>
+                <Input
+                  id="margem_operacional_percent"
+                  type="number"
+                  step="0.01"
+                  value={formData.margem_operacional_percent || ''}
+                  onChange={(e) => setFormData({...formData, margem_operacional_percent: Number(e.target.value)})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="margem_liquida_percent">Margem Líquida %</Label>
+                <Input
+                  id="margem_liquida_percent"
+                  type="number"
+                  step="0.01"
+                  value={formData.margem_liquida_percent || ''}
+                  onChange={(e) => setFormData({...formData, margem_liquida_percent: Number(e.target.value)})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="roic">ROIC</Label>
+                <Input
+                  id="roic"
+                  type="number"
+                  step="0.01"
+                  value={formData.roic || ''}
+                  onChange={(e) => setFormData({...formData, roic: Number(e.target.value)})}
+                />
+              </div>
+              <div>
                 <Label htmlFor="roe">ROE</Label>
                 <Input
                   id="roe"
@@ -243,13 +394,23 @@ export function FinancialDataDialog({ companyId, data, onSuccess, mode }: Financ
                 />
               </div>
               <div>
-                <Label htmlFor="liquidez_corrente">Liquidez Corrente</Label>
+                <Label htmlFor="roa">ROA</Label>
                 <Input
-                  id="liquidez_corrente"
+                  id="roa"
                   type="number"
                   step="0.01"
-                  value={formData.liquidez_corrente || ''}
-                  onChange={(e) => setFormData({...formData, liquidez_corrente: Number(e.target.value)})}
+                  value={formData.roa || ''}
+                  onChange={(e) => setFormData({...formData, roa: Number(e.target.value)})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="dividend_yield">Dividend Yield</Label>
+                <Input
+                  id="dividend_yield"
+                  type="number"
+                  step="0.01"
+                  value={formData.dividend_yield || ''}
+                  onChange={(e) => setFormData({...formData, dividend_yield: Number(e.target.value)})}
                 />
               </div>
             </div>
