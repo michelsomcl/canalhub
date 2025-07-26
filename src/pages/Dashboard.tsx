@@ -245,7 +245,7 @@ export default function Dashboard() {
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-80 p-0">
-                  <Command>
+                  <Command shouldFilter={false}>
                     <CommandInput 
                       placeholder="Pesquisar por nome ou ticker..." 
                       value={searchValue}
@@ -255,14 +255,16 @@ export default function Dashboard() {
                       <CommandEmpty>Nenhuma empresa encontrada.</CommandEmpty>
                       <CommandGroup>
                         {companies
-                          .filter(company => 
-                            company.nome.toLowerCase().includes(searchValue.toLowerCase()) ||
-                            company.ticker.toLowerCase().includes(searchValue.toLowerCase())
-                          )
+                          .filter(company => {
+                            if (!searchValue) return true;
+                            const searchLower = searchValue.toLowerCase();
+                            return company.nome.toLowerCase().includes(searchLower) ||
+                                   company.ticker.toLowerCase().includes(searchLower);
+                          })
                           .map(company => (
                           <CommandItem
                             key={company.id}
-                            value={company.id}
+                            value={`${company.ticker}-${company.nome}`}
                             onSelect={() => {
                               setSelectedCompany(company.id);
                               setSearchOpen(false);
