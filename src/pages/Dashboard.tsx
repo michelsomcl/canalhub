@@ -5,9 +5,11 @@ import { IndicatorChart } from "@/components/charts/IndicatorChart";
 import { ComparisonCard } from "@/components/dashboard/ComparisonCard";
 import { FinancialDataDialog } from "@/components/dashboard/FinancialDataDialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Edit } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Edit, Search } from "lucide-react";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Company, FinancialIndicator } from "@/types/company";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -79,6 +81,8 @@ export default function Dashboard() {
   const [companyData, setCompanyData] = useState<FinancialIndicator[]>([]);
   const [latestData, setLatestData] = useState<FinancialIndicator | null>(null);
   const [loading, setLoading] = useState(true);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
   const { toast } = useToast();
 
   // Load companies from Supabase
@@ -224,18 +228,57 @@ export default function Dashboard() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-3xl font-bold text-primary">Dashboard Financeiro</h1>
-            <Select value={selectedCompany} onValueChange={setSelectedCompany}>
-              <SelectTrigger className="w-64">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {companies.map(company => (
-                  <SelectItem key={company.id} value={company.id}>
-                    {company.ticker} - {company.nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="w-80">
+              <Popover open={searchOpen} onOpenChange={setSearchOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={searchOpen}
+                    className="w-full justify-between"
+                  >
+                    {selectedCompany 
+                      ? companies.find(company => company.id === selectedCompany)?.ticker + " - " + companies.find(company => company.id === selectedCompany)?.nome
+                      : "Pesquisar empresa..."
+                    }
+                    <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 p-0">
+                  <Command>
+                    <CommandInput 
+                      placeholder="Pesquisar por nome ou ticker..." 
+                      value={searchValue}
+                      onValueChange={setSearchValue}
+                    />
+                    <CommandList>
+                      <CommandEmpty>Nenhuma empresa encontrada.</CommandEmpty>
+                      <CommandGroup>
+                        {companies
+                          .filter(company => 
+                            company.nome.toLowerCase().includes(searchValue.toLowerCase()) ||
+                            company.ticker.toLowerCase().includes(searchValue.toLowerCase())
+                          )
+                          .map(company => (
+                          <CommandItem
+                            key={company.id}
+                            value={company.id}
+                            onSelect={() => {
+                              setSelectedCompany(company.id);
+                              setSearchOpen(false);
+                              setSearchValue("");
+                            }}
+                          >
+                            <span className="font-medium">{company.ticker}</span>
+                            <span className="ml-2 text-muted-foreground">- {company.nome}</span>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
           </div>
           
           {selectedCompanyInfo && (
@@ -296,22 +339,24 @@ export default function Dashboard() {
               <h3 className="text-xl font-semibold text-primary">Todos os Indicadores Financeiros - {latestData.quarter}</h3>
               
               {/* Revenue and Operational */}
-              <div className="space-y-6">
+              <div className="space-y-8">
                 <h4 className="text-lg font-medium text-primary">Receitas e Operacionais</h4>
-                <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                  {['receitas_bens_servicos', 'custo_receita_operacional', 'despesas_operacionais_total', 'lucro_operacional_antes_receita_despesa_nao_recorrente', 'lucro_liquido_apos_impostos'].map((field) => {
-                    const fieldKey = field as keyof FinancialIndicator;
-                    const value = latestData[fieldKey] as number;
-                    if (value === undefined || value === null) return null;
-                    
-                    const comparison = getComparison(value, fieldKey);
-                    return (
-                      <div key={field} className="space-y-4">
+                {['receitas_bens_servicos', 'custo_receita_operacional', 'despesas_operacionais_total', 'lucro_operacional_antes_receita_despesa_nao_recorrente', 'lucro_liquido_apos_impostos'].map((field) => {
+                  const fieldKey = field as keyof FinancialIndicator;
+                  const value = latestData[fieldKey] as number;
+                  if (value === undefined || value === null) return null;
+                  
+                  const comparison = getComparison(value, fieldKey);
+                  return (
+                    <div key={field} className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                      <div className="lg:col-span-3">
                         <IndicatorChart
                           title={getIndicatorTitle(fieldKey)}
                           data={getChartData(fieldKey)}
                           unit={getIndicatorUnit(fieldKey)}
                         />
+                      </div>
+                      <div className="lg:col-span-1">
                         <ComparisonCard
                           title={getIndicatorTitle(fieldKey)}
                           current={value || 0}
@@ -320,28 +365,30 @@ export default function Dashboard() {
                           unit={getIndicatorUnit(fieldKey)}
                         />
                       </div>
-                    );
-                  })}
-                </div>
+                    </div>
+                  );
+                })}
               </div>
 
               {/* Cash Flow */}
-              <div className="space-y-6">
+              <div className="space-y-8">
                 <h4 className="text-lg font-medium text-primary">Fluxo de Caixa</h4>
-                <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                  {['caixa_equivalentes_caixa', 'fluxo_caixa_liquido_atividades_operacionais', 'variacao_liquida_caixa_total'].map((field) => {
-                    const fieldKey = field as keyof FinancialIndicator;
-                    const value = latestData[fieldKey] as number;
-                    if (value === undefined || value === null) return null;
-                    
-                    const comparison = getComparison(value, fieldKey);
-                    return (
-                      <div key={field} className="space-y-4">
+                {['caixa_equivalentes_caixa', 'fluxo_caixa_liquido_atividades_operacionais', 'variacao_liquida_caixa_total'].map((field) => {
+                  const fieldKey = field as keyof FinancialIndicator;
+                  const value = latestData[fieldKey] as number;
+                  if (value === undefined || value === null) return null;
+                  
+                  const comparison = getComparison(value, fieldKey);
+                  return (
+                    <div key={field} className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                      <div className="lg:col-span-3">
                         <IndicatorChart
                           title={getIndicatorTitle(fieldKey)}
                           data={getChartData(fieldKey)}
                           unit={getIndicatorUnit(fieldKey)}
                         />
+                      </div>
+                      <div className="lg:col-span-1">
                         <ComparisonCard
                           title={getIndicatorTitle(fieldKey)}
                           current={value || 0}
@@ -350,28 +397,30 @@ export default function Dashboard() {
                           unit={getIndicatorUnit(fieldKey)}
                         />
                       </div>
-                    );
-                  })}
-                </div>
+                    </div>
+                  );
+                })}
               </div>
 
               {/* Working Capital and Debt */}
-              <div className="space-y-6">
+              <div className="space-y-8">
                 <h4 className="text-lg font-medium text-primary">Capital de Giro e Endividamento</h4>
-                <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                  {['capital_giro', 'endividamento_total', 'percentual_divida_total_ativo_total'].map((field) => {
-                    const fieldKey = field as keyof FinancialIndicator;
-                    const value = latestData[fieldKey] as number;
-                    if (value === undefined || value === null) return null;
-                    
-                    const comparison = getComparison(value, fieldKey);
-                    return (
-                      <div key={field} className="space-y-4">
+                {['capital_giro', 'endividamento_total', 'percentual_divida_total_ativo_total'].map((field) => {
+                  const fieldKey = field as keyof FinancialIndicator;
+                  const value = latestData[fieldKey] as number;
+                  if (value === undefined || value === null) return null;
+                  
+                  const comparison = getComparison(value, fieldKey);
+                  return (
+                    <div key={field} className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                      <div className="lg:col-span-3">
                         <IndicatorChart
                           title={getIndicatorTitle(fieldKey)}
                           data={getChartData(fieldKey)}
                           unit={getIndicatorUnit(fieldKey)}
                         />
+                      </div>
+                      <div className="lg:col-span-1">
                         <ComparisonCard
                           title={getIndicatorTitle(fieldKey)}
                           current={value || 0}
@@ -380,28 +429,30 @@ export default function Dashboard() {
                           unit={getIndicatorUnit(fieldKey)}
                         />
                       </div>
-                    );
-                  })}
-                </div>
+                    </div>
+                  );
+                })}
               </div>
 
               {/* Liquidity */}
-              <div className="space-y-6">
+              <div className="space-y-8">
                 <h4 className="text-lg font-medium text-primary">Liquidez</h4>
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                  {['liquidez_geral', 'liquidez_corrente'].map((field) => {
-                    const fieldKey = field as keyof FinancialIndicator;
-                    const value = latestData[fieldKey] as number;
-                    if (value === undefined || value === null) return null;
-                    
-                    const comparison = getComparison(value, fieldKey);
-                    return (
-                      <div key={field} className="space-y-4">
+                {['liquidez_geral', 'liquidez_corrente'].map((field) => {
+                  const fieldKey = field as keyof FinancialIndicator;
+                  const value = latestData[fieldKey] as number;
+                  if (value === undefined || value === null) return null;
+                  
+                  const comparison = getComparison(value, fieldKey);
+                  return (
+                    <div key={field} className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                      <div className="lg:col-span-3">
                         <IndicatorChart
                           title={getIndicatorTitle(fieldKey)}
                           data={getChartData(fieldKey)}
                           unit={getIndicatorUnit(fieldKey)}
                         />
+                      </div>
+                      <div className="lg:col-span-1">
                         <ComparisonCard
                           title={getIndicatorTitle(fieldKey)}
                           current={value || 0}
@@ -410,28 +461,30 @@ export default function Dashboard() {
                           unit={getIndicatorUnit(fieldKey)}
                         />
                       </div>
-                    );
-                  })}
-                </div>
+                    </div>
+                  );
+                })}
               </div>
 
               {/* Profitability */}
-              <div className="space-y-6">
+              <div className="space-y-8">
                 <h4 className="text-lg font-medium text-primary">Rentabilidade</h4>
-                <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                  {['ebit', 'ebitda', 'margem_ebitda_percent', 'margem_lucro_bruto_percent', 'margem_operacional_percent', 'margem_liquida_percent'].map((field) => {
-                    const fieldKey = field as keyof FinancialIndicator;
-                    const value = latestData[fieldKey] as number;
-                    if (value === undefined || value === null) return null;
-                    
-                    const comparison = getComparison(value, fieldKey);
-                    return (
-                      <div key={field} className="space-y-4">
+                {['ebit', 'ebitda', 'margem_ebitda_percent', 'margem_lucro_bruto_percent', 'margem_operacional_percent', 'margem_liquida_percent'].map((field) => {
+                  const fieldKey = field as keyof FinancialIndicator;
+                  const value = latestData[fieldKey] as number;
+                  if (value === undefined || value === null) return null;
+                  
+                  const comparison = getComparison(value, fieldKey);
+                  return (
+                    <div key={field} className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                      <div className="lg:col-span-3">
                         <IndicatorChart
                           title={getIndicatorTitle(fieldKey)}
                           data={getChartData(fieldKey)}
                           unit={getIndicatorUnit(fieldKey)}
                         />
+                      </div>
+                      <div className="lg:col-span-1">
                         <ComparisonCard
                           title={getIndicatorTitle(fieldKey)}
                           current={value || 0}
@@ -440,28 +493,30 @@ export default function Dashboard() {
                           unit={getIndicatorUnit(fieldKey)}
                         />
                       </div>
-                    );
-                  })}
-                </div>
+                    </div>
+                  );
+                })}
               </div>
 
               {/* Returns */}
-              <div className="space-y-6">
+              <div className="space-y-8">
                 <h4 className="text-lg font-medium text-primary">Retornos</h4>
-                <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                  {['roic', 'roe', 'roa', 'dividend_yield'].map((field) => {
-                    const fieldKey = field as keyof FinancialIndicator;
-                    const value = latestData[fieldKey] as number;
-                    if (value === undefined || value === null) return null;
-                    
-                    const comparison = getComparison(value, fieldKey);
-                    return (
-                      <div key={field} className="space-y-4">
+                {['roic', 'roe', 'roa', 'dividend_yield'].map((field) => {
+                  const fieldKey = field as keyof FinancialIndicator;
+                  const value = latestData[fieldKey] as number;
+                  if (value === undefined || value === null) return null;
+                  
+                  const comparison = getComparison(value, fieldKey);
+                  return (
+                    <div key={field} className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                      <div className="lg:col-span-3">
                         <IndicatorChart
                           title={getIndicatorTitle(fieldKey)}
                           data={getChartData(fieldKey)}
                           unit={getIndicatorUnit(fieldKey)}
                         />
+                      </div>
+                      <div className="lg:col-span-1">
                         <ComparisonCard
                           title={getIndicatorTitle(fieldKey)}
                           current={value || 0}
@@ -470,9 +525,9 @@ export default function Dashboard() {
                           unit={getIndicatorUnit(fieldKey)}
                         />
                       </div>
-                    );
-                  })}
-                </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </>
