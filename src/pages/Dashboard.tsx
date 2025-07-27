@@ -7,12 +7,13 @@ import { FinancialDataDialog } from "@/components/dashboard/FinancialDataDialog"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Edit, Search } from "lucide-react";
+import { Edit, Search, TrendingUp, ArrowRight } from "lucide-react";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Company, FinancialIndicator } from "@/types/company";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import financialHero from "@/assets/financial-hero.jpg";
 
 // Mock data - would come from Supabase
 const mockCompanies: Company[] = [
@@ -223,86 +224,137 @@ export default function Dashboard() {
     <div className="min-h-screen bg-background">
       <Navigation />
       
-      <div className="container mx-auto px-4 py-8">
-        {/* Company Selection */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-3xl font-bold text-primary">Dashboard Financeiro</h1>
-            <div className="w-80">
-              <Popover open={searchOpen} onOpenChange={setSearchOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={searchOpen}
-                    className="w-full justify-between"
-                  >
-                    {selectedCompany 
-                      ? companies.find(company => company.id === selectedCompany)?.ticker + " - " + companies.find(company => company.id === selectedCompany)?.nome
-                      : "Pesquisar empresa..."
-                    }
-                    <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-80 p-0">
-                  <Command shouldFilter={false}>
-                    <CommandInput 
-                      placeholder="Pesquisar por nome ou ticker..." 
-                      value={searchValue}
-                      onValueChange={setSearchValue}
-                    />
-                    <CommandList>
-                      <CommandEmpty>Nenhuma empresa encontrada.</CommandEmpty>
-                      <CommandGroup>
-                        {companies
-                          .filter(company => {
-                            if (!searchValue) return true;
-                            const searchLower = searchValue.toLowerCase();
-                            return company.nome.toLowerCase().includes(searchLower) ||
-                                   company.ticker.toLowerCase().includes(searchLower);
-                          })
-                          .map(company => (
-                          <CommandItem
-                            key={company.id}
-                            value={`${company.ticker}-${company.nome}`}
-                            onSelect={() => {
-                              setSelectedCompany(company.id);
-                              setSearchOpen(false);
-                              setSearchValue("");
-                            }}
-                          >
-                            <span className="font-medium">{company.ticker}</span>
-                            <span className="ml-2 text-muted-foreground">- {company.nome}</span>
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-            </div>
+      {/* Hero Section */}
+      <div className="relative h-96 overflow-hidden">
+        <img 
+          src={financialHero} 
+          alt="Financial dashboard" 
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-background/90 to-background/60" />
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-primary mb-4 max-w-4xl">
+            Acompanhe os resultados trimestrais das principais empresas da Bolsa
+          </h1>
+          <div className="w-full max-w-2xl mt-8">
+            <Popover open={searchOpen} onOpenChange={setSearchOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={searchOpen}
+                  className="w-full h-14 text-lg justify-between bg-background/95 backdrop-blur-sm border-2 hover:bg-background/90"
+                  size="lg"
+                >
+                  {selectedCompany 
+                    ? companies.find(company => company.id === selectedCompany)?.ticker + " - " + companies.find(company => company.id === selectedCompany)?.nome
+                    : "Busque pela empresa ou Ticker"
+                  }
+                  <Search className="ml-2 h-5 w-5 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-full max-w-2xl p-0">
+                <Command shouldFilter={false}>
+                  <CommandInput 
+                    placeholder="Busque pela empresa ou Ticker..." 
+                    value={searchValue}
+                    onValueChange={setSearchValue}
+                    className="h-12 text-lg"
+                  />
+                  <CommandList>
+                    <CommandEmpty>Nenhuma empresa encontrada.</CommandEmpty>
+                    <CommandGroup>
+                      {companies
+                        .filter(company => {
+                          if (!searchValue) return true;
+                          const searchLower = searchValue.toLowerCase();
+                          return company.nome.toLowerCase().includes(searchLower) ||
+                                 company.ticker.toLowerCase().includes(searchLower);
+                        })
+                        .map(company => (
+                        <CommandItem
+                          key={company.id}
+                          value={`${company.ticker}-${company.nome}`}
+                          onSelect={() => {
+                            setSelectedCompany(company.id);
+                            setSearchOpen(false);
+                            setSearchValue("");
+                          }}
+                          className="py-3"
+                        >
+                          <span className="font-medium text-lg">{company.ticker}</span>
+                          <span className="ml-2 text-muted-foreground">- {company.nome}</span>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-8">
+        {/* Selected Company Section */}
+        <div className="mb-8">
           
-          {selectedCompanyInfo && (
-            <Card>
+          {selectedCompanyInfo && latestData && (
+            <Card className="bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20">
               <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-2xl font-bold text-primary">{selectedCompanyInfo.nome}</h2>
-                    <p className="text-muted-foreground">Ticker: {selectedCompanyInfo.ticker}</p>
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <TrendingUp className="h-6 w-6 text-primary" />
+                      <h2 className="text-2xl lg:text-3xl font-bold text-primary">{selectedCompanyInfo.nome}</h2>
+                    </div>
+                    <p className="text-lg text-muted-foreground mb-2">Ticker: <span className="font-semibold text-primary">{selectedCompanyInfo.ticker}</span></p>
+                    <div className="bg-accent/10 rounded-lg p-4 mb-4">
+                      <h3 className="text-lg font-semibold text-primary mb-2">Último Resultado Disponível</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="text-center sm:text-left">
+                          <p className="text-sm text-muted-foreground">Trimestre</p>
+                          <p className="text-xl font-bold text-primary">{latestData.quarter}</p>
+                        </div>
+                        <div className="text-center sm:text-left">
+                          <p className="text-sm text-muted-foreground">Receitas</p>
+                          <p className="text-xl font-bold text-primary">
+                            {new Intl.NumberFormat('pt-BR', {
+                              style: 'currency',
+                              currency: 'BRL',
+                              minimumFractionDigits: 0,
+                              maximumFractionDigits: 0,
+                            }).format(latestData.receitas_bens_servicos || 0)}
+                          </p>
+                        </div>
+                        <div className="text-center sm:text-left">
+                          <p className="text-sm text-muted-foreground">Lucro Líquido</p>
+                          <p className="text-xl font-bold text-primary">
+                            {new Intl.NumberFormat('pt-BR', {
+                              style: 'currency',
+                              currency: 'BRL',
+                              minimumFractionDigits: 0,
+                              maximumFractionDigits: 0,
+                            }).format(latestData.lucro_liquido_apos_impostos || 0)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                     <a 
                       href={selectedCompanyInfo.link_ri} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="text-accent hover:underline"
+                      className="inline-flex items-center gap-2 text-accent hover:text-accent/80 transition-colors"
                     >
-                      Link do RI
+                      Link do RI <ArrowRight className="h-4 w-4" />
                     </a>
                   </div>
-                  <Button variant="outline" size="sm">
-                    <Edit className="h-4 w-4 mr-2" />
-                    Editar Dados
-                  </Button>
+                  <div className="flex flex-col sm:flex-row lg:flex-col gap-2">
+                    <Button variant="outline" size="sm" className="w-full sm:w-auto">
+                      <Edit className="h-4 w-4 mr-2" />
+                      Editar Dados
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -338,7 +390,7 @@ export default function Dashboard() {
           <>
             {/* All Financial Indicators with Charts and Comparison Cards */}
             <div className="space-y-8">
-              <h3 className="text-xl font-semibold text-primary">Todos os Indicadores Financeiros - {latestData.quarter}</h3>
+              <h3 className="text-xl lg:text-2xl font-semibold text-primary">Análise Detalhada - {latestData.quarter}</h3>
               
               {/* Revenue and Operational */}
               <div className="space-y-8">
@@ -350,15 +402,15 @@ export default function Dashboard() {
                   
                   const comparison = getComparison(value, fieldKey);
                   return (
-                    <div key={field} className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                      <div className="lg:col-span-3">
+                    <div key={field} className="grid grid-cols-1 xl:grid-cols-4 gap-4 lg:gap-6">
+                      <div className="xl:col-span-3">
                         <IndicatorChart
                           title={getIndicatorTitle(fieldKey)}
                           data={getChartData(fieldKey)}
                           unit={getIndicatorUnit(fieldKey)}
                         />
                       </div>
-                      <div className="lg:col-span-1">
+                      <div className="xl:col-span-1">
                         <ComparisonCard
                           title={getIndicatorTitle(fieldKey)}
                           current={value || 0}
@@ -382,15 +434,15 @@ export default function Dashboard() {
                   
                   const comparison = getComparison(value, fieldKey);
                   return (
-                    <div key={field} className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                      <div className="lg:col-span-3">
+                    <div key={field} className="grid grid-cols-1 xl:grid-cols-4 gap-4 lg:gap-6">
+                      <div className="xl:col-span-3">
                         <IndicatorChart
                           title={getIndicatorTitle(fieldKey)}
                           data={getChartData(fieldKey)}
                           unit={getIndicatorUnit(fieldKey)}
                         />
                       </div>
-                      <div className="lg:col-span-1">
+                      <div className="xl:col-span-1">
                         <ComparisonCard
                           title={getIndicatorTitle(fieldKey)}
                           current={value || 0}
@@ -414,15 +466,15 @@ export default function Dashboard() {
                   
                   const comparison = getComparison(value, fieldKey);
                   return (
-                    <div key={field} className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                      <div className="lg:col-span-3">
+                    <div key={field} className="grid grid-cols-1 xl:grid-cols-4 gap-4 lg:gap-6">
+                      <div className="xl:col-span-3">
                         <IndicatorChart
                           title={getIndicatorTitle(fieldKey)}
                           data={getChartData(fieldKey)}
                           unit={getIndicatorUnit(fieldKey)}
                         />
                       </div>
-                      <div className="lg:col-span-1">
+                      <div className="xl:col-span-1">
                         <ComparisonCard
                           title={getIndicatorTitle(fieldKey)}
                           current={value || 0}
@@ -446,15 +498,15 @@ export default function Dashboard() {
                   
                   const comparison = getComparison(value, fieldKey);
                   return (
-                    <div key={field} className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                      <div className="lg:col-span-3">
+                    <div key={field} className="grid grid-cols-1 xl:grid-cols-4 gap-4 lg:gap-6">
+                      <div className="xl:col-span-3">
                         <IndicatorChart
                           title={getIndicatorTitle(fieldKey)}
                           data={getChartData(fieldKey)}
                           unit={getIndicatorUnit(fieldKey)}
                         />
                       </div>
-                      <div className="lg:col-span-1">
+                      <div className="xl:col-span-1">
                         <ComparisonCard
                           title={getIndicatorTitle(fieldKey)}
                           current={value || 0}
@@ -478,15 +530,15 @@ export default function Dashboard() {
                   
                   const comparison = getComparison(value, fieldKey);
                   return (
-                    <div key={field} className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                      <div className="lg:col-span-3">
+                    <div key={field} className="grid grid-cols-1 xl:grid-cols-4 gap-4 lg:gap-6">
+                      <div className="xl:col-span-3">
                         <IndicatorChart
                           title={getIndicatorTitle(fieldKey)}
                           data={getChartData(fieldKey)}
                           unit={getIndicatorUnit(fieldKey)}
                         />
                       </div>
-                      <div className="lg:col-span-1">
+                      <div className="xl:col-span-1">
                         <ComparisonCard
                           title={getIndicatorTitle(fieldKey)}
                           current={value || 0}
@@ -510,15 +562,15 @@ export default function Dashboard() {
                   
                   const comparison = getComparison(value, fieldKey);
                   return (
-                    <div key={field} className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                      <div className="lg:col-span-3">
+                    <div key={field} className="grid grid-cols-1 xl:grid-cols-4 gap-4 lg:gap-6">
+                      <div className="xl:col-span-3">
                         <IndicatorChart
                           title={getIndicatorTitle(fieldKey)}
                           data={getChartData(fieldKey)}
                           unit={getIndicatorUnit(fieldKey)}
                         />
                       </div>
-                      <div className="lg:col-span-1">
+                      <div className="xl:col-span-1">
                         <ComparisonCard
                           title={getIndicatorTitle(fieldKey)}
                           current={value || 0}
