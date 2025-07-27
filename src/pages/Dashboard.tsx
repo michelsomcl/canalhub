@@ -218,6 +218,13 @@ export default function Dashboard() {
     return titles[field as string] || field as string;
   };
 
+  // Function to format values in millions
+  const formatInMillions = (value: number) => {
+    if (value === 0) return 'R$ 0';
+    const millions = value / 1000000;
+    return `R$ ${millions.toFixed(1)} milhões`;
+  };
+
   const selectedCompanyInfo = companies.find(c => c.id === selectedCompany);
 
   return (
@@ -246,10 +253,7 @@ export default function Dashboard() {
                   className="w-full h-14 text-lg justify-between bg-background/95 backdrop-blur-sm border-2 hover:bg-background/90"
                   size="lg"
                 >
-                  {selectedCompany 
-                    ? companies.find(company => company.id === selectedCompany)?.ticker + " - " + companies.find(company => company.id === selectedCompany)?.nome
-                    : "Busque pela empresa ou Ticker"
-                  }
+Busque pela empresa ou Ticker
                   <Search className="ml-2 h-5 w-5 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
@@ -319,23 +323,13 @@ export default function Dashboard() {
                         <div className="text-center sm:text-left">
                           <p className="text-sm text-muted-foreground">Receitas</p>
                           <p className="text-xl font-bold text-primary">
-                            {new Intl.NumberFormat('pt-BR', {
-                              style: 'currency',
-                              currency: 'BRL',
-                              minimumFractionDigits: 0,
-                              maximumFractionDigits: 0,
-                            }).format(latestData.receitas_bens_servicos || 0)}
+                            {formatInMillions(latestData.receitas_bens_servicos || 0)}
                           </p>
                         </div>
                         <div className="text-center sm:text-left">
                           <p className="text-sm text-muted-foreground">Lucro Líquido</p>
                           <p className="text-xl font-bold text-primary">
-                            {new Intl.NumberFormat('pt-BR', {
-                              style: 'currency',
-                              currency: 'BRL',
-                              minimumFractionDigits: 0,
-                              maximumFractionDigits: 0,
-                            }).format(latestData.lucro_liquido_apos_impostos || 0)}
+                            {formatInMillions(latestData.lucro_liquido_apos_impostos || 0)}
                           </p>
                         </div>
                       </div>
